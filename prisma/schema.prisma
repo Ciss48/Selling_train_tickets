@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Station {
+  id           String     @id @default(cuid())
+  code         String     @unique
+  name         String
+  nameVi       String
+  province     String
+  originRoutes Schedule[] @relation("Origin")
+  destRoutes   Schedule[] @relation("Destination")
+}
+
+model Train {
+  id        String     @id @default(cuid())
+  code      String     @unique
+  name      String
+  schedules Schedule[]
+}
+
+model Schedule {
+  id            String    @id @default(cuid())
+  trainId       String
+  train         Train     @relation(fields: [trainId], references: [id])
+  originId      String
+  origin        Station   @relation("Origin", fields: [originId], references: [id])
+  destinationId String
+  destination   Station   @relation("Destination", fields: [destinationId], references: [id])
+  departureTime String
+  arrivalTime   String
+  durationMins  Int
+  travelDate    String
+  cars          Car[]
+  bookings      Booking[]
+}
+
+model Car {
+  id          String   @id @default(cuid())
+  scheduleId  String
+  schedule    Schedule @relation(fields: [scheduleId], references: [id])
+  carNumber   Int
+  carType     String
+  carTypeName String
+  priceUsd    Int
+  seats       Seat[]
+}
+
+model Seat {
+  id          String       @id @default(cuid())
+  carId       String
+  car         Car          @relation(fields: [carId], references: [id])
+  seatNo      String
+  status      String       @default("AVAILABLE")
+  bookingSeat BookingSeat?
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  scheduleId String
+  schedule   Schedule      @relation(fields: [scheduleId], references: [id])
+  passengers Passenger[]
+  seats      BookingSeat[]
+  payment    Payment?
+  status     String        @default("PENDING")
+  totalUsd   Int
+  createdAt  DateTime      @default(now())
+  expiresAt  DateTime?
+}
+
+model BookingSeat {
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  seatId    String  @unique
+  seat      Seat    @relation(fields: [seatId], references: [id])
+
+  @@id([bookingId, seatId])
+}
+
+model Passenger {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  firstName   String
+  lastName    String
+  passport    String
+  nationality String
+  type        String   @default("ADULT")
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  bookingId       String   @unique
+  booking         Booking  @relation(fields: [bookingId], references: [id])
+  stripePaymentId String   @unique
+  amount          Int
+  currency        String   @default("usd")
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+}
