@@ -33,6 +33,9 @@ yarn-error.log*
 prisma/dev.db
 prisma/dev.db-journal
 
+# generated seed SQL (large file, generate locally with: node generate-seed-sql.mjs)
+prisma/seed.sql
+
 # vercel
 .vercel
 
