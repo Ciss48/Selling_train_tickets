@@ -10,7 +10,8 @@ export async function GET() {
     })
     return NextResponse.json({ data: stations, error: null })
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
     console.error(err)
-    return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ data: null, error: message }, { status: 500 })
   }
 }
