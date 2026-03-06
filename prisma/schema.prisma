@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Station {
@@ -56,8 +57,14 @@ model Seat {
   carId       String
   car         Car          @relation(fields: [carId], references: [id])
   seatNo      String
-  status      String       @default("AVAILABLE")
+  status      SeatStatus   @default(AVAILABLE)
   bookingSeat BookingSeat?
+}
+
+enum SeatStatus {
+  AVAILABLE
+  BOOKED
+  HELD
 }
 
 model Booking {
@@ -67,7 +74,7 @@ model Booking {
   passengers Passenger[]
   seats      BookingSeat[]
   payment    Payment?
-  status     String        @default("PENDING")
+  status     BookingStatus @default(PENDING)
   totalUsd   Int
   createdAt  DateTime      @default(now())
   expiresAt  DateTime?
@@ -82,24 +89,44 @@ model BookingSeat {
   @@id([bookingId, seatId])
 }
 
+enum BookingStatus {
+  PENDING
+  HELD
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
 model Passenger {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   bookingId   String
-  booking     Booking  @relation(fields: [bookingId], references: [id])
+  booking     Booking       @relation(fields: [bookingId], references: [id])
   firstName   String
   lastName    String
   passport    String
   nationality String
-  type        String   @default("ADULT")
+  type        PassengerType @default(ADULT)
+}
+
+enum PassengerType {
+  ADULT
+  CHILD
 }
 
 model Payment {
-  id              String   @id @default(cuid())
-  bookingId       String   @unique
-  booking         Booking  @relation(fields: [bookingId], references: [id])
-  stripePaymentId String   @unique
+  id              String        @id @default(cuid())
+  bookingId       String        @unique
+  booking         Booking       @relation(fields: [bookingId], references: [id])
+  stripePaymentId String        @unique
   amount          Int
-  currency        String   @default("usd")
-  status          String   @default("PENDING")
-  createdAt       DateTime @default(now())
+  currency        String        @default("usd")
+  status          PaymentStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
 }
